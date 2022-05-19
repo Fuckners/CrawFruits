@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        #cenario {
+            background-color: aqua;
+            border: 5px dashed black;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            image-rendering: -moz-crisp-edges;
+            width: 400px;
+            height: 400px;
+        }
+
+    </style>
+    <title>CrawFruit</title>
+</head>
+<body>
+    <h2 id="timer">Timer: </h2>
+    <canvas id="cenario" width="10" height="10">
+    </canvas><br>
+    Digite seu Nick: <input type="text" id="nick" placeholder="Digite seu nick">
+    <div id="placar">
+        <h1>Pontuação Atual:</h1>
+        <h3 id="pontos"></h3>
+
+        <h1>Record:</h1>
+        <ul id="records">
+
+        </ul>
+    </div>
+    <script>
+        "use strict"
+
+        // COLOCANDO LOCALSTORAGE NA VARIAVEL STORAGE
+        const storage = localStorage
+        const placar = []
+        // storage.setItem('placar', JSON.stringify(placar))
+        // const placar = [
+        //     {usuario0 : 12 },
+        //     {usuario1 : 40 },
+        //     [usuario2 : 21 ]...
+        // ]
+
+        const nick = document.getElementById('nick')
+
+        // SETANDO ESPECIFICAÇÕES PRINCIPAIS (TIMER/LOOPING)
+        const intervalo = 0.1
+        const maxTimer = 2.5
+        let contador = maxTimer
+        let continuar = true
+        let timer = ''
+
+        // PEGANDO O CANVAS QUE VAI SER O 'FUNDO'
+        const cenario = document.getElementById('cenario')
+        const contexto = cenario.getContext('2d')
+
+        const displayTimer = document.getElementById('timer')
+        const record = document.getElementById('records')
+        const tabpontos = document.getElementById('pontos')
+        let pontos = 0
+
+
+        // CRIANDO ELEMENTOS DO JOGO
+        const game = {
+            jogador : {x: parseInt(Math.random(1) * 10), y: parseInt(Math.random(1) * 10)},
+            fruta : {x: parseInt(Math.random(1) * 10), y: parseInt(Math.random(1) * 10)}
+        }
+        
+        // SETANDO TECLAS QUE SERÃO USADAS
+        document.addEventListener('keydown', handleKeyDown)
+
+        function handleKeyDown(evento) {
+            
+                switch (evento.key) {
+                    case 'w':
+                        console.log('Up')
+                        game.jogador.y -= 1
+                        break;
+                    case 'ArrowUp':
+                        console.log('Up')
+                        game.jogador.y -= 1
+                        break;
+
+                    case 'a':
+                        console.log('Left')
+                        game.jogador.x -= 1
+                        break;
+                    case 'ArrowLeft':
+                        console.log('Left')
+                        game.jogador.x -= 1
+                        break;
+
+                    case 's':
+                        console.log('Down')
+                        game.jogador.y += 1
+                        break;
+                    case 'ArrowDown':
+                        console.log('Down')
+                        game.jogador.y += 1
+                        break;
+
+                    case 'd':
+                        console.log('Right')
+                        game.jogador.x += 1
+                        break;
+                    case 'ArrowRight':
+                        console.log('Right')
+                        game.jogador.x += 1
+                        break;
+
+                    case ' ':
+                        console.log('iniciar!')
+                        startTimer()
+                        console.log(continuar)
+                        renderScreen()
+                        break;
+
+                    default:
+                        console.log('*Nada acontece*')
+                        console.log(evento.key)
+                        break;
+                }
+        }
+
+        // FUNÇÃO PARA FICAR RENDERIZANDO A TELA O 'TEMPO TODO'
+        function renderScreen() {
+            if (contador.toFixed(1) == 0.0) {
+                continuar = false
+            }
+
+            // CASO CONTINUAR SEJA FALSO, ELE ENCERRA O COISO
+            if (continuar == false) {
+                stopTimer()
+                alert(`Perdeu! Sua pontuação final foi ${pontos}`)
+                contexto.fillStyle = 'white'
+                contexto.clearRect(0, 0, 10, 10)
+                placar.push({'jogador' : nick.value, 'pontuação' : pontos})
+                storage.setItem('placar', JSON.stringify(placar))
+
+                nick.focus()
+                nick.value = ''
+
+            } else {
+                /* TENTATIVA FALHA DE TENTAR COLOCAR UM PLACAR COM AS PONTUAÇÕES
+                const histPlacar = JSON.parse(storage.getItem('placar'))
+                for (let i; i < histPlacar.length; i++) {
+                    records.innerHTML += `<li>Jogador: ${histPlacar[i].jogador}, Pontuação: ${histPlacar[i].pontuação}</li>`
+                }*/
+
+                // MOSTRANDO O CONTADOR
+                tabpontos.innerHTML = pontos
+                displayTimer.innerHTML = contador.toFixed(1)
+
+                // LIMPANDO A TELA PARA RENDERIZAR O PROXIMO FRAME
+                contexto.fillStyle = 'white'
+                contexto.clearRect(0, 0, 10, 10)
+
+                // RENDERIZANDO A NOVA POSIÇÃO DO PERSONAGEM/FRUTA
+                // PERSONAGEM
+                contexto.fillStyle = 'black'
+                contexto.fillRect(game.jogador.x, game.jogador.y, 1, 1)
+
+                // MARCANDO PONTOS
+                if (game.fruta.x == game.jogador.x && game.fruta.y == game.jogador.y) {
+                    newPoint()
+                }
+
+                // FRUTA
+                contexto.fillStyle = 'green'
+                contexto.fillRect(game.fruta.x, game.fruta.y, 1, 1)
+
+                requestAnimationFrame(renderScreen)
+            }
+        };
+
+        // SE A FRUTA E O PERSONAGEM ESTIVEREM NO MSM LUGAR, A FRUTA VAI PARA UMA POSIÇÃO ALEATÓRIA, ADICIONA 1 PT NO PLACAR E RESETA O TIMER
+
+        function newPoint() {
+            clearInterval(timer)
+            pontos += 1
+            game.fruta.x = parseInt(Math.random(1) * 10)
+            game.fruta.y = parseInt(Math.random(1) * 10)
+            contador = maxTimer
+            timer = setInterval(() => {
+            contador -= intervalo
+        }, 100);
+        }
+
+        // 'INICIA' O JOGO
+        function startTimer() {
+            game.fruta.x = parseInt(Math.random(1) * 10)
+            game.fruta.y = parseInt(Math.random(1) * 10)
+            pontos = 0
+            continuar = true
+            contador = maxTimer
+            timer = setInterval(() => {
+            contador -= intervalo
+        }, 100);   
+        }
+
+        // PAUSA O TIMER
+        function stopTimer() {
+            clearInterval(timer)
+        }
+
+    </script>
+</body>
+</html>
